@@ -14,7 +14,7 @@ class TestRuexCore < Minitest::Test
       html {
         body {
           div {
-            p "text"
+            p "p text"
             span "more"
           }
         }
@@ -22,7 +22,7 @@ class TestRuexCore < Minitest::Test
     RUBY
 
     html = render(code)
-    assert_equal "<html><body><div><p>text</p><span>more</span></div></body></html>", html
+    assert_equal "<html><body><div><p>p text</p><span>more</span></div></body></html>", html
   end
 
   def test_boolean_attribute_true
@@ -36,19 +36,25 @@ class TestRuexCore < Minitest::Test
   end
 
   def test_text_node
-    html = render('div { text "abc" }')
-    assert_equal "<div>abc</div>", html
+    html = render('div { text "p abc" }')
+    assert_equal "<div>p abc</div>", html
   end
 
   def test_text_node_alias
-    html = render('div { _ "xyz" }')
-    assert_equal "<div>xyz</div>", html
+    html = render('div { _ "span xyz" }')
+    assert_equal "<div>span xyz</div>", html
   end
 
   def test_context_variables
     code = 'p name'
     html = render(code, ctx: { name: "Ruex" })
     assert_equal "<p>Ruex</p>", html
+  end
+
+  def test_context_variables_interpolation
+    code = 'p "hello, #{name}"'
+    html = render(code, ctx: { name: "Ruex" })
+    assert_equal "<p>hello, Ruex</p>", html
   end
 
   def test_context_variables_each
