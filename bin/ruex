@@ -3,72 +3,71 @@
 require "optparse"
 require "ruex/cli"
 require "ruex/version"
+require "ruex/helper/cli"
 
-HELP = <<~TEXT
-  Render ruex expressions as HTML.
-
-  Usage:
-    echo 'p "hello"' | ruex
-    ruex -e 'p "hello"'
-    ruex -f template.ruex
-
-  Options:
-    -I, --include-path PATH   Add PATH to $LOAD_PATH
-    -r, --require LIB         Require LIB and include its module into Ruex::Core
-    -e, --expr EXPR           Evaluate EXPR instead of reading from stdin
-    -f, --file FILE           Read Ruex DSL from FILE
-    -b, --bind KEY=VALUE      Bind variables available inside Ruex DSL
-    -v, --version             Show Ruex version
-    -h, --help                Show this help message
-TEXT
-
-def show_help
-  puts HELP
-  exit(0)
-end
-
-def show_version
-  puts Ruex::VERSION
-  exit(0)
-end
-
-def constantize_require_path(lib)
-  lib
-    .sub(/\.rb$/, "")
-    .split("/")
-    .map { |seg| seg.split("_").map(&:capitalize).join }
-    .join("::")
-end
+include Ruex::Helper::CLI
 
 load_paths    = []
 require_files = []
 expr          = nil
 file_path     = nil
 bindings      = {}
+context_file  = nil
 
 opts = OptionParser.new do |opt|
   opt.on("-I", "--include-path PATH") { |path| load_paths << path }
   opt.on("-r", "--require LIB")       { |lib|  require_files << lib }
   opt.on("-e", "--expr EXPR")         { |e| expr = e }
   opt.on("-f", "--file FILE")         { |path| file_path = path }
+
   opt.on("-b", "--bind KEY=VALUE") do |pair|
     key, value = pair.split("=", 2)
     bindings[key.to_sym] = value
   end
-  opt.on("-h", "--help")              { show_help }
-  opt.on("-v", "--version")           { show_version }
+
+  opt.on("-c", "--context-file FILE") do |file|
+    context_file = file
+  end
+
+  opt.on("-h", "--help") do
+    puts load_help
+    exit(0)
+  end
+
+  opt.on("-v", "--version") do
+    puts Ruex::VERSION
+    exit(0)
+  end
 end
 
-opts.parse!(ARGV)
+begin
+  opts.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  warn "Unknown option: #{e.args.join(" ")}"
+  exit(1)
+end
 
+# Load context file
+if context_file
+  begin
+    bindings.merge!(load_context_file(context_file))
+  rescue => e
+    warn e.message
+    exit(1)
+  end
+end
+
+# Load paths
 load_paths.each { |p| $LOAD_PATH.unshift(p) }
 
+# load custom tag libraries
 require_files.each do |lib|
   require lib
-  mod_name = constantize_require_path(lib)
+  mod_name = path_to_module_name(lib)
   Ruex::Core.include(Object.const_get(mod_name))
 end
 
+# Execute
 Ruex::CLI.new.run(
   expr: expr,
   file: file_path,
