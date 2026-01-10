@@ -5,10 +5,12 @@ module Ruex
     TAGS = YAML.load_file([__dir__, "tags.yml"].join('/'))
 
     def initialize
-      @output = ''
+      @output = ''.dup
     end
 
     def render_attrs(attrs, boolean_attrs)
+      return '' if attrs.empty?
+
       parts = []
 
       # data attributes
@@ -35,17 +37,18 @@ module Ruex
 
     def render_tag(tag_def, args, attrs, block)
       name = tag_def['name']
-      void = tag_def[':void']
-      boolean_attrs = tag_def[':boolean'] || []
+      void = tag_def['void']
+      boolean_attrs = (tag_def['boolean'] || []).map(&:to_sym)
 
-      attr_str = %( #{render_attrs(attrs, boolean_attrs)}) unless attrs.empty?
+      rendered_attrs = render_attrs(attrs, boolean_attrs)
+      attr_str = rendered_attrs.empty? ? '' : %( #{rendered_attrs})
 
       if void
-        @output << "<#{name}#{attr_str}>"
+        @output << "<#{name}#{attr_str}>".dup
         return
       end
 
-      @output << "<#{name}#{attr_str}>"
+      @output << "<#{name}#{attr_str}>".dup
 
       if block
         block.call
@@ -53,7 +56,7 @@ module Ruex
         @output << args.first.to_s
       end
 
-      @output << "</#{name}>"
+      @output << "</#{name}>".dup
     end
 
     TAGS.each do |tag|
@@ -70,7 +73,7 @@ module Ruex
     alias _ text
 
     def render(code, ctx: {})
-      @output = ""
+      @output = "".dup
 
       b = binding
       ctx.each do |k, v|
