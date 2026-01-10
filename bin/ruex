@@ -1,8 +1,77 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
 
+require "optparse"
 require "ruex/cli"
+require "ruex/version"
 
-app = Ruex::CLI.new
-app.run(ARGV)
+HELP = <<~TEXT
+  Render ruex expressions as HTML.
+
+  Usage:
+    echo 'p "hello"' | ruex
+    ruex -e 'p "hello"'
+    ruex -f template.ruex
+
+  Options:
+    -I, --include-path PATH   Add PATH to $LOAD_PATH
+    -r, --require LIB         Require LIB and include its module into Ruex::Core
+    -e, --expr EXPR           Evaluate EXPR instead of reading from stdin
+    -f, --file FILE           Read Ruex DSL from FILE
+    -b, --bind KEY=VALUE      Bind variables available inside Ruex DSL
+    -v, --version             Show Ruex version
+    -h, --help                Show this help message
+TEXT
+
+def show_help
+  puts HELP
+  exit(0)
+end
+
+def show_version
+  puts Ruex::VERSION
+  exit(0)
+end
+
+def constantize_require_path(lib)
+  lib
+    .sub(/\.rb$/, "")
+    .split("/")
+    .map { |seg| seg.split("_").map(&:capitalize).join }
+    .join("::")
+end
+
+load_paths    = []
+require_files = []
+expr          = nil
+file_path     = nil
+bindings      = {}
+
+opts = OptionParser.new do |opt|
+  opt.on("-I", "--include-path PATH") { |path| load_paths << path }
+  opt.on("-r", "--require LIB")       { |lib|  require_files << lib }
+  opt.on("-e", "--expr EXPR")         { |e| expr = e }
+  opt.on("-f", "--file FILE")         { |path| file_path = path }
+  opt.on("-b", "--bind KEY=VALUE") do |pair|
+    key, value = pair.split("=", 2)
+    bindings[key.to_sym] = value
+  end
+  opt.on("-h", "--help")              { show_help }
+  opt.on("-v", "--version")           { show_version }
+end
+
+opts.parse!(ARGV)
+
+load_paths.each { |p| $LOAD_PATH.unshift(p) }
+
+require_files.each do |lib|
+  require lib
+  mod_name = constantize_require_path(lib)
+  Ruex::Core.include(Object.const_get(mod_name))
+end
+
+Ruex::CLI.new.run(
+  expr: expr,
+  file: file_path,
+  ctx: bindings
+)
 
