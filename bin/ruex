@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "ruex/cli"
+
+app = Ruex::CLI.new
+app.run(ARGV)
+
