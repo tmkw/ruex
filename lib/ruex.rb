@@ -1,126 +1,7 @@
 class Ruex
-  TAGS = [
-    # Document metadata
-    {name: :html},
-    {name: :head},
-    {name: :title},
-    {name: :base, void: true},
-    {name: :link, void: true, boolean: [:disabled]},
-    {name: :meta, void: true},
-    {name: :style},
-    {name: :script, boolean: [:async, :defer, :nomodule]},
-    {name: :noscript},
-    {name: :template},
+  require 'yaml'
 
-    # Sections
-    {name: :body},
-    {name: :section},
-    {name: :nav},
-    {name: :article},
-    {name: :aside},
-    {name: :h1},
-    {name: :h2},
-    {name: :h3},
-    {name: :h4},
-    {name: :h5},
-    {name: :h6},
-    {name: :header},
-    {name: :footer},
-    {name: :address},
-    {name: :main},
-
-    # Grouping content
-    {name: :p},
-    {name: :hr, void: true},
-    {name: :pre},
-    {name: :blockquote},
-    {name: :ol},
-    {name: :ul},
-    {name: :li},
-    {name: :dl},
-    {name: :dt},
-    {name: :dd},
-    {name: :figure},
-    {name: :figcaption},
-    {name: :div},
-
-    # Text-level semantics
-    {name: :a},
-    {name: :em},
-    {name: :strong},
-    {name: :small},
-    {name: :s},
-    {name: :cite},
-    {name: :q},
-    {name: :dfn},
-    {name: :abbr},
-    {name: :data},
-    {name: :time},
-    {name: :code},
-    {name: :var},
-    {name: :samp},
-    {name: :kbd},
-    {name: :sub},
-    {name: :sup},
-    {name: :i},
-    {name: :b},
-    {name: :u},
-    {name: :mark},
-    {name: :ruby},
-    {name: :rt},
-    {name: :rp},
-    {name: :bdi},
-    {name: :bdo},
-    {name: :span},
-    {name: :br, void: true},
-    {name: :wbr, void: true},
-
-    # Edits
-    {name: :ins},
-    {name: :del},
-
-    # Embedded content
-    {name: :picture},
-    {name: :source, void: true},
-    {name: :img, void: true},
-    {name: :iframe},
-    {name: :embed, void: true},
-    {name: :object},
-    {name: :param, void: true},
-    {name: :video, boolean: [:autoplay, :controls, :loop, :muted]},
-    {name: :audio, boolean: [:autoplay, :controls, :loop, :muted]},
-    {name: :track, void: true},
-    {name: :map},
-    {name: :area, void: true},
-
-    # Forms
-    {name: :form, boolean: [:novalidate]},
-    {name: :label},
-    {name: :input, void: true, boolean: [:disabled, :readonly, :required, :autofocus, :multiple, :hidden, :formnovalidate, :checked]},
-    {name: :button, boolean: [:disabled, :autofocus, :formnovalidate]},
-    {name: :select, boolean: [:disabled, :multiple, :required, :autofocus]},
-    {name: :datalist},
-    {name: :optgroup, boolean: [:disabled]},
-    {name: :option, boolean: [:disabled, :selected]},
-    {name: :textarea, boolean: [:disabled, :readonly, :required, :autofocus]},
-    {name: :output},
-    {name: :progress},
-    {name: :meter},
-    {name: :fieldset, boolean: [:disabled]},
-    {name: :legend},
-
-    # Interactive elements
-    {name: :details},
-    {name: :summary},
-    {name: :dialog},
-    {name: :menu},
-    {name: :menuitem},
-
-    # Scripting
-    {name: :canvas},
-    {name: :slot},
-    {name: :portal}
-  ]
+  TAGS = YAML.load_file([__dir__, "tags.yml"].join('/'))
 
   def initialize
     @output = ''
@@ -129,7 +10,7 @@ class Ruex
   def render_attrs(attrs, boolean_attrs)
     parts = []
 
-    # --- data 属性の展開 ---
+    # data attributes
     if attrs.key?(:data)
       data_hash = attrs.delete(:data)
       data_hash.each do |k, v|
@@ -140,10 +21,10 @@ class Ruex
 
     attrs.each do |k, v|
       if boolean_attrs&.include?(k)
-        # --- boolean 属性の処理 ---
-        parts << k.to_s if v   # true のときだけ出力
+        # boolean attributes
+        parts << k.to_s if v   # use only when the option is enabled
       else
-        # --- 通常属性 ---
+        # normal attributes
         parts << %(#{k}="#{v}")
       end
     end
@@ -152,9 +33,9 @@ class Ruex
   end
 
   def render_tag(tag_def, args, attrs, block)
-    name = tag_def[:name]
-    void = tag_def[:void]
-    boolean_attrs = tag_def[:boolean] || []
+    name = tag_def['name']
+    void = tag_def[':void']
+    boolean_attrs = tag_def[':boolean'] || []
 
     attr_str = %( #{render_attrs(attrs, boolean_attrs)}) unless attrs.empty?
 
@@ -175,7 +56,7 @@ class Ruex
   end
 
   TAGS.each do |tag|
-    define_method(tag[:name]) do |*args, **attrs, &block|
+    define_method(tag['name']) do |*args, **attrs, &block|
       render_tag(tag, args, attrs, block)
     end
   end
