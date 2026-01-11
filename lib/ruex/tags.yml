@@ -1,0 +1,194 @@
+- name: html
+- name: head
+- name: title
+- name: base
+  void: true
+- name: link
+  void: true
+  boolean:
+    - disabled
+- name: meta
+  void: true
+- name: style
+- name: script
+  boolean:
+    - async
+    - defer
+    - nomodule
+- name: noscript
+- name: template
+
+# Sections
+- name: body
+- name: section
+- name: nav
+- name: article
+- name: aside
+- name: h1
+- name: h2
+- name: h3
+- name: h4
+- name: h5
+- name: h6
+- name: header
+- name: footer
+- name: address
+- name: main
+
+# Grouping content
+- name: p
+- name: hr
+  void: true
+- name: pre
+- name: blockquote
+- name: ol
+- name: ul
+- name: li
+- name: dl
+- name: dt
+- name: dd
+- name: figure
+- name: figcaption
+- name: div
+
+# Text-level semantics
+- name: a
+- name: em
+- name: strong
+- name: small
+- name: s
+- name: cite
+- name: q
+- name: dfn
+- name: abbr
+- name: data
+- name: time
+- name: code
+- name: var
+- name: samp
+- name: kbd
+- name: sub
+- name: sup
+- name: i
+- name: b
+- name: u
+- name: mark
+- name: ruby
+- name: rt
+- name: rp
+- name: bdi
+- name: bdo
+- name: span
+- name: br
+  void: true
+- name: wbr
+  void: true
+
+# Edits
+- name: ins
+- name: del
+
+# Embedded content
+- name: picture
+- name: source
+  void: true
+- name: img
+  void: true
+- name: iframe
+- name: embed
+  void: true
+- name: object
+- name: param
+  void: true
+- name: video
+  boolean:
+    - autoplay
+    - controls
+    - loop
+    - muted
+- name: audio
+  boolean:
+    - autoplay
+    - controls
+    - loop
+    - muted
+- name: track
+  void: true
+- name: map
+- name: area
+  void: true
+
+# Forms
+- name: form
+  boolean:
+    - novalidate
+- name: label
+- name: input
+  void: true
+  boolean:
+    - disabled
+    - readonly
+    - required
+    - autofocus
+    - multiple
+    - hidden
+    - formnovalidate
+    - checked
+- name: button
+  boolean:
+    - disabled
+    - autofocus
+    - formnovalidate
+- name: select
+  boolean:
+    - disabled
+    - multiple
+    - required
+    - autofocus
+- name: datalist
+- name: optgroup
+  boolean:
+    - disabled
+- name: option
+  boolean:
+    - disabled
+    - selected
+- name: textarea
+  boolean:
+    - disabled
+    - readonly
+    - required
+    - autofocus
+- name: output
+- name: progress
+- name: meter
+- name: fieldset
+  boolean:
+    - disabled
+- name: legend
+
+# Interactive elements
+- name: details
+- name: summary
+- name: dialog
+- name: menu
+- name: menuitem
+
+# Table content
+- name: table
+- name: caption
+- name: colgroup
+- name: col
+  void: true
+- name: thead
+- name: tbody
+- name: tfoot
+- name: tr
+- name: td
+- name: th
+
+# Scripting
+- name: canvas
+- name: slot
+- name: portal
+

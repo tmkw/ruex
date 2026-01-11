@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "stringio"
+require "ruex/cli"
+require "ruex/version"
+require "ruex/helper/cli"
+
+include Ruex::Helper::CLI
+
+load_paths    = []
+require_files = []
+expr          = nil
+file_path     = nil
+bindings      = {}
+context_file  = nil
+
+opts = OptionParser.new do |opt|
+  opt.on("-I", "--include-path PATH") { |path| load_paths << path }
+  opt.on("-r", "--require LIB")       { |lib|  require_files << lib }
+  opt.on("-e", "--expr EXPR")         { |e| expr = e }
+  opt.on("-f", "--file FILE")         { |path| file_path = path }
+
+  opt.on("-b", "--bind RUBY_HASH") do |str|
+    begin
+      hash = ContextFile.read(StringIO.new(str))
+      bindings.merge!(hash)
+    rescue => e
+      warn e.message
+      exit(1)
+    end
+  end
+
+  opt.on("-c", "--context-file FILE") do |file|
+    context_file = file
+  end
+
+  opt.on("-h", "--help") do
+    puts load_help
+    exit(0)
+  end
+
+  opt.on("-v", "--version") do
+    puts Ruex::VERSION
+    exit(0)
+  end
+end
+
+begin
+  opts.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  warn "Unknown option: #{e.args.join(" ")}"
+  exit(1)
+end
+
+# Load context file
+if context_file
+  begin
+    bindings.merge!(ContextFile.read(context_file))
+  rescue => e
+    warn e.message
+    exit(1)
+  end
+end
+
+# Load paths
+load_paths.each { |p| $LOAD_PATH.unshift(p) }
+
+# load custom tag libraries
+require_files.each do |lib|
+  require lib
+  mod_name = path_to_module_name(lib)
+  Ruex::Core.include(Object.const_get(mod_name))
+end
+
+# Execute
+Ruex::CLI.new.run(
+  expr: expr,
+  file: file_path,
+  ctx: bindings
+)
+
