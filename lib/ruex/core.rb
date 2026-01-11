@@ -75,12 +75,13 @@ module Ruex
     def render(code, ctx: {})
       @output = "".dup
 
-      b = binding
+      ___binding___ = binding
       ctx.each do |k, v|
-        b.local_variable_set(k, v)
+        ___binding___.local_variable_set(k, v)
       end
 
-      eval(code, b , __FILE__, __LINE__)
+      eval(code, ___binding___, __FILE__, __LINE__)
+      #instance_eval(code, __FILE__, __LINE__)
       @output
     end
   end

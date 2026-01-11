@@ -45,9 +45,9 @@ class TestRuexCore < Minitest::Test
     assert_equal "<div>span xyz</div>", html
   end
 
-  def test_context_variables
-    code = 'p name'
-    html = render(code, ctx: { name: "Ruex" })
+  def test_context_variable
+    code = 'p a'
+    html = render(code, ctx: { a: "Ruex" })
     assert_equal "<p>Ruex</p>", html
   end
 
@@ -57,16 +57,22 @@ class TestRuexCore < Minitest::Test
     assert_equal "<p>hello, Ruex</p>", html
   end
 
+  def test_context_variables_multi_key
+    code = 'p greeting; p  name'
+    html = render(code, ctx: { greeting: "Hey!", name: "Ruex" })
+    assert_equal "<p>Hey!</p><p>Ruex</p>", html
+  end
+
   def test_context_variables_each
     code = <<~RUBY
       ul {
         items.each do |item|
-          li item
+          li item[:name]
         end
       }
     RUBY
 
-    html = render(code, ctx: { items: ["a", "b", "c"] })
+    html = render(code, ctx: { items: [{name: "a"}, {name: "b"}, {name: "c"}] })
     assert_equal "<ul><li>a</li><li>b</li><li>c</li></ul>", html
   end
 end

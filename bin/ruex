@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "optparse"
+require "stringio"
 require "ruex/cli"
 require "ruex/version"
 require "ruex/helper/cli"
@@ -20,9 +21,14 @@ opts = OptionParser.new do |opt|
   opt.on("-e", "--expr EXPR")         { |e| expr = e }
   opt.on("-f", "--file FILE")         { |path| file_path = path }
 
-  opt.on("-b", "--bind KEY=VALUE") do |pair|
-    key, value = pair.split("=", 2)
-    bindings[key.to_sym] = value
+  opt.on("-b", "--bind RUBY_HASH") do |str|
+    begin
+      hash = ContextFile.read(StringIO.new(str))
+      bindings.merge!(hash)
+    rescue => e
+      warn e.message
+      exit(1)
+    end
   end
 
   opt.on("-c", "--context-file FILE") do |file|
@@ -50,7 +56,7 @@ end
 # Load context file
 if context_file
   begin
-    bindings.merge!(load_context_file(context_file))
+    bindings.merge!(ContextFile.read(context_file))
   rescue => e
     warn e.message
     exit(1)

@@ -1,3 +1,4 @@
+require_relative "test_helper"
 require "minitest/autorun"
 require "tempfile"
 require "json"
@@ -72,9 +73,39 @@ class TestRuexCLI < Minitest::Test
     end
   end
 
-  def test_bind_option
-    result = `#{CMD} -b name=ちゃん -e 'p name'`
+  def test_bind_option_hash_literal
+    result = `#{CMD} -b '{a: "ちゃん"}' -e 'p a'`
     assert_equal "<p>ちゃん</p>\n", result
+  end
+
+  def test_bind_option_multiple_keys
+    result = `#{CMD} -b '{a: 1, b: 2}' -e 'p a; p b'`
+    assert_equal "<p>1</p><p>2</p>\n", result
+  end
+
+  def test_bind_option_array
+    result = `#{CMD} -b '{people: [hoge, bar]}' -e 'people.each { |name| p name }'`
+    assert_equal "<p>hoge</p><p>bar</p>\n", result
+  end
+
+  def test_bind_option_nested_array
+    result = `#{CMD} -b '{people: [{name: "hoge"}, {name: "bar"}]}' -e 'people.each { |person| p person[:name] }'`
+    assert_equal "<p>hoge</p><p>bar</p>\n", result
+  end
+
+  def test_bind_option_invalid_yaml
+    result = `#{CMD} -b '{a: !!ruby/object:Foo {}}' -e 'p a' 2>&1`
+    assert_match("<p>{}</p>\n", result)
+  end
+
+  def test_bind_option_not_hash
+    result = `#{CMD} -b '[1,2,3]' -e 'p x' 2>&1`
+    assert_match(/-b expects a Hash literal/, result)
+  end
+
+  def test_bind_option_syntax_error
+    result = `#{CMD} -b '{a: 1,,}' -e 'p a' 2>&1`
+    assert_match(/Invalid -b hash/, result)
   end
 
   def test_context_file_yaml
@@ -84,6 +115,16 @@ class TestRuexCLI < Minitest::Test
 
       result = `#{CMD} -c #{f.path} -e 'p msg'`
       assert_equal "<p>YAML_OK</p>\n", result
+    end
+  end
+
+  def test_context_file_yaml_unsafe
+    Tempfile.create(["ctx", ".yml"]) do |f|
+      f.write("foo: !ruby/object:OpenStruct {}\n")
+      f.flush
+
+      result = `#{CMD} -c #{f.path} -e 'p foo' 2>&1`
+      assert_match(/disallowed class/, result)
     end
   end
 
@@ -102,7 +143,7 @@ class TestRuexCLI < Minitest::Test
       f.write("invalid")
       f.flush
 
-      result = `#{CMD} -cf #{f.path} -e 'p x' 2>&1`
+      result = `#{CMD} -c #{f.path} -e 'p x' 2>&1`
       assert_match(/Unknown context file format/, result)
     end
   end
