@@ -1,5 +1,7 @@
 # ruex
 
+[![Gem Version](https://badge.fury.io/rb/ruex.svg)](https://badge.fury.io/rb/ruex)
+
 A library and CLI tool that generates HTML using plain Ruby expressions.
 It is intended for static site or page generation, and is not suitable as a dynamic web page renderer.
 
